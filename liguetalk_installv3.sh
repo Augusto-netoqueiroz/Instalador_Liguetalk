@@ -47,17 +47,37 @@ echo "wine '$LIGUETALK_PATH'" >> ~/abrir_liguetalk.sh
 # Tornar o script executável
 chmod +x ~/abrir_liguetalk.sh
 
-# Detectar o caminho da área de trabalho do usuário
-DESKTOP_PATH=$(xdg-user-dir DESKTOP)
+# Detectar o caminho da área de trabalho do root e do usuário comum
+ROOT_DESKTOP_PATH="/root/Desktop"
+USER_DESKTOP_PATH=$(xdg-user-dir DESKTOP)
 
-# Se o diretório da área de trabalho não for encontrado, usa o diretório padrão da pasta inicial
-if [ -z "$DESKTOP_PATH" ]; then
-    DESKTOP_PATH=~/Desktop
-    mkdir -p "$DESKTOP_PATH"
+# Se o diretório da área de trabalho do usuário não for encontrado, usa o diretório padrão da pasta inicial
+if [ -z "$USER_DESKTOP_PATH" ]; then
+    USER_DESKTOP_PATH=/home/$(whoami)/Desktop
+    mkdir -p "$USER_DESKTOP_PATH"
 fi
 
-# Criar arquivo .desktop para o atalho
-cat <<EOF > "$DESKTOP_PATH/LigueTalk.desktop"
+# Criar o atalho na área de trabalho do root, se o script estiver sendo executado como root
+if [ "$EUID" -eq 0 ]; then
+    # Criar arquivo .desktop para o root
+    mkdir -p "$ROOT_DESKTOP_PATH"
+    cat <<EOF > "$ROOT_DESKTOP_PATH/LigueTalk.desktop"
+[Desktop Entry]
+Version=1.0
+Name=LigueTalk
+Comment=Executar o LigueTalk via Wine
+Exec=/root/abrir_liguetalk.sh
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Categories=Application
+EOF
+    # Tornar o arquivo .desktop do root executável
+    chmod +x "$ROOT_DESKTOP_PATH/LigueTalk.desktop"
+fi
+
+# Criar o atalho na área de trabalho do usuário comum
+cat <<EOF > "$USER_DESKTOP_PATH/LigueTalk.desktop"
 [Desktop Entry]
 Version=1.0
 Name=LigueTalk
@@ -69,7 +89,7 @@ Type=Application
 Categories=Application
 EOF
 
-# Tornar o arquivo .desktop executável
-chmod +x "$DESKTOP_PATH/LigueTalk.desktop"
+# Tornar o arquivo .desktop do usuário comum executável
+chmod +x "$USER_DESKTOP_PATH/LigueTalk.desktop"
 
 echo "Instalação concluída. O atalho para o LigueTalk foi criado na área de trabalho."
