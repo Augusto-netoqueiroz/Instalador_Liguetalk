@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Verificar se o script está sendo executado como root
-if [ "$(id -u)" -eq 0 ]; then
-    echo "Erro: Não execute este script como root. Por favor, execute-o como usuário comum."
-    exit 1
-fi
-
 # Adicionar arquitetura i386 (necessária para instalar Wine 32 bits)
 sudo dpkg --add-architecture i386
 
