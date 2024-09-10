@@ -47,16 +47,29 @@ echo "wine '$LIGUETALK_PATH'" >> ~/abrir_liguetalk.sh
 # Tornar o script executável
 chmod +x ~/abrir_liguetalk.sh
 
-# Detectar o caminho da área de trabalho do usuário comum
+# Detectar o caminho da área de trabalho do usuário
 DESKTOP_PATH=$(xdg-user-dir DESKTOP)
 
-# Verificar se a área de trabalho foi encontrada
+# Se o diretório da área de trabalho não for encontrado, usa o diretório padrão da pasta inicial
 if [ -z "$DESKTOP_PATH" ]; then
-    echo "Erro: Não foi possível localizar o diretório da área de trabalho."
-    exit 1
+    DESKTOP_PATH=~/Desktop
+    mkdir -p "$DESKTOP_PATH"
 fi
 
-# Mover o script para a área de trabalho do usuário comum
-mv ~/abrir_liguetalk.sh "$DESKTOP_PATH/abrir_liguetalk.sh"
+# Criar arquivo .desktop para o atalho
+cat <<EOF > "$DESKTOP_PATH/LigueTalk.desktop"
+[Desktop Entry]
+Version=1.0
+Name=LigueTalk
+Comment=Executar o LigueTalk via Wine
+Exec=/home/$(whoami)/abrir_liguetalk.sh
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Categories=Application
+EOF
 
-echo "Instalação concluída. O atalho para o LigueTalk foi movido para a área de trabalho."
+# Tornar o arquivo .desktop executável
+chmod +x "$DESKTOP_PATH/LigueTalk.desktop"
+
+echo "Instalação concluída. O atalho para o LigueTalk foi criado na área de trabalho."
