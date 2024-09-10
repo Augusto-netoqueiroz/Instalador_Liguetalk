@@ -47,16 +47,22 @@ echo "wine '$LIGUETALK_PATH'" >> ~/abrir_liguetalk.sh
 # Tornar o script executável
 chmod +x ~/abrir_liguetalk.sh
 
-# Criar o atalho na pasta home
-HOME_PATH=~
+# Identificar o usuário que está rodando o script
+USER_HOME=$(eval echo ~$(logname))
 
-# Criar arquivo .desktop na pasta home
-cat <<EOF > "$HOME_PATH/LigueTalk.desktop"
+# Verificar se a pasta do usuário foi identificada
+if [ -z "$USER_HOME" ]; then
+    echo "Erro: Não foi possível identificar a pasta home do usuário."
+    exit 1
+fi
+
+# Criar arquivo .desktop na pasta home do usuário
+cat <<EOF > "$USER_HOME/LigueTalk.desktop"
 [Desktop Entry]
 Version=1.0
 Name=LigueTalk
 Comment=Executar o LigueTalk via Wine
-Exec=$HOME_PATH/abrir_liguetalk.sh
+Exec=$USER_HOME/abrir_liguetalk.sh
 Icon=utilities-terminal
 Terminal=false
 Type=Application
@@ -64,13 +70,13 @@ Categories=Application
 EOF
 
 # Tornar o arquivo .desktop executável
-chmod +x "$HOME_PATH/LigueTalk.desktop"
+chmod +x "$USER_HOME/LigueTalk.desktop"
 
 # Verificar se o atalho foi criado com sucesso
-if [ -f "$HOME_PATH/LigueTalk.desktop" ]; then
-    echo "Atalho criado na pasta home."
+if [ -f "$USER_HOME/LigueTalk.desktop" ]; then
+    echo "Atalho criado na pasta home do usuário $USER_HOME."
 else
-    echo "Erro: Não foi possível criar o atalho na pasta home."
+    echo "Erro: Não foi possível criar o atalho na pasta home do usuário."
 fi
 
 echo "Instalação concluída."
