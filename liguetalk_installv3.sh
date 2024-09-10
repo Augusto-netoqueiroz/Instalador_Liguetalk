@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # Verificar se o script está sendo executado como root
@@ -7,24 +6,14 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-# Atualizar pacotes e dependências
-sudo apt update
-sudo apt upgrade -y
-
-# Verificar se o wget está instalado, se não, instalar
-if ! command -v wget &> /dev/null; then
-    echo "wget não encontrado. Instalando..."
-    sudo apt install wget -y
-fi
-
 # Adicionar arquitetura i386 (necessária para instalar Wine 32 bits)
 sudo dpkg --add-architecture i386
 
-# Atualizar pacotes após adicionar a nova arquitetura
+# Atualizar pacotes e dependências
 sudo apt update
 
-# Instalar Wine
-sudo apt install wine64 wine32 -y
+# Verificar se wget e wine estão instalados, e instalar apenas se necessário
+sudo apt install -y wget wine64 wine32
 
 # Verificar se o Wine foi instalado corretamente
 if ! command -v wine &> /dev/null; then
@@ -36,7 +25,9 @@ fi
 mkdir -p ~/Downloads
 
 # Baixar o LigueTalk
-wget https://www.microsip.org/download/private/LigueTalk-3.20.7.exe -O ~/Downloads/LigueTalk-3.20.7.exe
+if [ ! -f ~/Downloads/LigueTalk-3.20.7.exe ]; then
+    wget https://www.microsip.org/download/private/LigueTalk-3.20.7.exe -O ~/Downloads/LigueTalk-3.20.7.exe
+fi
 
 # Verificar se o LigueTalk foi baixado corretamente
 if [ ! -f ~/Downloads/LigueTalk-3.20.7.exe ]; then
