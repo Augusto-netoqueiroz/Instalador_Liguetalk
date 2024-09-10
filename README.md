@@ -10,14 +10,14 @@
 
 3. Vá até a pasta:
 
-       cd Instalador_Liguetalk.git
+       cd Instalador_Liguetalk
 
-4. Torne o script executavel:
+5. Torne o script executavel:
 
        chmod +x liguetalk_installv3.sh
 
-5. Rode o script:
+6. Rode o script:
 
        ./liguetalk_installv3.sh
 
-6. Autorize o arquivo .desktop na área de trabalho com a opção "Allow Launching"
+7. Autorize o arquivo .desktop na área de trabalho com a opção "Allow Launching"
