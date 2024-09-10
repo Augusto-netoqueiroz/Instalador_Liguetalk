@@ -51,7 +51,7 @@ chmod +x ~/abrir_liguetalk.sh
 ROOT_DESKTOP_PATH="/root/Desktop"
 USER_DESKTOP_PATH=$(xdg-user-dir DESKTOP)
 
-# Se o diretório da área de trabalho do usuário não for encontrado, usa o diretório padrão da pasta inicial
+# Se o diretório da área de trabalho do usuário comum não for encontrado, usa o diretório padrão da pasta inicial
 if [ -z "$USER_DESKTOP_PATH" ]; then
     USER_DESKTOP_PATH=/home/$(whoami)/Desktop
     mkdir -p "$USER_DESKTOP_PATH"
@@ -59,8 +59,15 @@ fi
 
 # Criar o atalho na área de trabalho do root, se o script estiver sendo executado como root
 if [ "$EUID" -eq 0 ]; then
+    echo "Criando atalho na área de trabalho do root..."
+    
+    # Verificar se o diretório da área de trabalho do root existe
+    if [ ! -d "$ROOT_DESKTOP_PATH" ]; then
+        echo "Diretório Desktop do root não encontrado. Criando o diretório..."
+        mkdir -p "$ROOT_DESKTOP_PATH"
+    fi
+    
     # Criar arquivo .desktop para o root
-    mkdir -p "$ROOT_DESKTOP_PATH"
     cat <<EOF > "$ROOT_DESKTOP_PATH/LigueTalk.desktop"
 [Desktop Entry]
 Version=1.0
@@ -72,11 +79,16 @@ Terminal=false
 Type=Application
 Categories=Application
 EOF
+
     # Tornar o arquivo .desktop do root executável
     chmod +x "$ROOT_DESKTOP_PATH/LigueTalk.desktop"
+    echo "Atalho criado na área de trabalho do root."
+else
+    echo "Este script não está sendo executado como root."
 fi
 
 # Criar o atalho na área de trabalho do usuário comum
+echo "Criando atalho na área de trabalho do usuário comum..."
 cat <<EOF > "$USER_DESKTOP_PATH/LigueTalk.desktop"
 [Desktop Entry]
 Version=1.0
@@ -92,4 +104,11 @@ EOF
 # Tornar o arquivo .desktop do usuário comum executável
 chmod +x "$USER_DESKTOP_PATH/LigueTalk.desktop"
 
-echo "Instalação concluída. O atalho para o LigueTalk foi criado na área de trabalho."
+# Verificar se o atalho foi criado com sucesso
+if [ -f "$USER_DESKTOP_PATH/LigueTalk.desktop" ]; then
+    echo "Atalho criado na área de trabalho do usuário comum."
+else
+    echo "Erro: Não foi possível criar o atalho na área de trabalho do usuário comum."
+fi
+
+echo "Instalação concluída."
