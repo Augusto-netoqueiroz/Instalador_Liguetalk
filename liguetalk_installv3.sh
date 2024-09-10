@@ -40,13 +40,6 @@ if [ -z "$LIGUETALK_PATH" ]; then
     exit 1
 fi
 
-# Criar script para abrir o LigueTalk
-echo '#!/bin/bash' > ~/abrir_liguetalk.sh
-echo "wine '$LIGUETALK_PATH'" >> ~/abrir_liguetalk.sh
-
-# Tornar o script executável
-chmod +x ~/abrir_liguetalk.sh
-
 # Identificar o usuário que está rodando o script
 USER_HOME=$(eval echo ~$(logname))
 
@@ -55,6 +48,13 @@ if [ -z "$USER_HOME" ]; then
     echo "Erro: Não foi possível identificar a pasta home do usuário."
     exit 1
 fi
+
+# Criar script para abrir o LigueTalk no diretório correto do usuário
+echo '#!/bin/bash' > "$USER_HOME/abrir_liguetalk.sh"
+echo "wine '$LIGUETALK_PATH'" >> "$USER_HOME/abrir_liguetalk.sh"
+
+# Tornar o script executável
+chmod +x "$USER_HOME/abrir_liguetalk.sh"
 
 # Criar arquivo .desktop na pasta home do usuário
 cat <<EOF > "$USER_HOME/LigueTalk.desktop"
@@ -71,6 +71,13 @@ EOF
 
 # Tornar o arquivo .desktop executável
 chmod +x "$USER_HOME/LigueTalk.desktop"
+
+# Verificar se o script foi criado corretamente
+if [ -f "$USER_HOME/abrir_liguetalk.sh" ]; then
+    echo "Script abrir_liguetalk.sh criado em $USER_HOME."
+else
+    echo "Erro: Não foi possível criar o script abrir_liguetalk.sh."
+fi
 
 # Verificar se o atalho foi criado com sucesso
 if [ -f "$USER_HOME/LigueTalk.desktop" ]; then
