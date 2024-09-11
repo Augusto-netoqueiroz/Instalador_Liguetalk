@@ -49,6 +49,11 @@ if [ -z "$USER_HOME" ]; then
     exit 1
 fi
 
+# Garantir permissões adequadas para os diretórios do Wine
+WINE_DIR=~/.wine
+sudo chmod -R a+rX "$WINE_DIR"
+sudo chown -R $(whoami):$(whoami) "$WINE_DIR"
+
 # Criar script para abrir o LigueTalk no diretório correto do usuário
 echo '#!/bin/bash' > "$USER_HOME/abrir_liguetalk.sh"
 echo "wine '$LIGUETALK_PATH'" >> "$USER_HOME/abrir_liguetalk.sh"
