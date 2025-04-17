@@ -1,94 +1,88 @@
 #!/bin/bash
+set -e
 
-# Adicionar arquitetura i386 (necessária para instalar Wine 32 bits)
+# Detectar o diretório home do usuário real (não root)
+if [ -n "$SUDO_USER" ]; then
+    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+    USER_HOME="$HOME"
+fi
+
+WINE_DIR="$USER_HOME/.wine"
+DOWNLOAD_DIR="$USER_HOME/Downloads"
+EXEC_SCRIPT="$USER_HOME/abrir_liguetalk.sh"
+DESKTOP_DIR="$USER_HOME/.local/share/applications"
+DESKTOP_FILE="$DESKTOP_DIR/LigueTalk.desktop"
+EXE_NAME="LigueTalk-3.20.7.exe"
+EXE_URL="https://www.microsip.org/download/private/${EXE_NAME}"
+EXE_PATH="$DOWNLOAD_DIR/$EXE_NAME"
+
+echo "Home do usuário: $USER_HOME"
+echo "Prefixo Wine: $WINE_DIR"
+
+# 1. Adicionar arquitetura i386 e atualizar índices
 sudo dpkg --add-architecture i386
-
-# Atualizar pacotes e dependências
 sudo apt update
 
-# Verificar se wget e wine estão instalados, e instalar apenas se necessário
+# 2. Instalar dependências
 sudo apt install -y wget wine64 wine32
 
-# Verificar se o Wine foi instalado corretamente
+# 3. Verificar instalação do Wine
 if ! command -v wine &> /dev/null; then
     echo "Erro: Wine não foi instalado corretamente."
     exit 1
 fi
 
-# Criar diretório para Downloads, caso não exista
-mkdir -p ~/Downloads
+# 4. Preparar diretório de downloads
+mkdir -p "$DOWNLOAD_DIR"
 
-# Baixar o LigueTalk
-if [ ! -f ~/Downloads/LigueTalk-3.20.7.exe ]; then
-    wget https://www.microsip.org/download/private/LigueTalk-3.20.7.exe -O ~/Downloads/LigueTalk-3.20.7.exe
+# 5. Baixar o instalador, se ainda não existe ou estiver vazio
+if [ ! -s "$EXE_PATH" ]; then
+    echo "Baixando $EXE_NAME..."
+    wget "$EXE_URL" -O "$EXE_PATH"
+    if [ $? -ne 0 ] || [ ! -s "$EXE_PATH" ]; then
+        echo "Erro: falha ao baixar $EXE_NAME."
+        exit 1
+    fi
 fi
 
-# Verificar se o LigueTalk foi baixado corretamente
-if [ ! -f ~/Downloads/LigueTalk-3.20.7.exe ]; then
-    echo "Erro: Não foi possível baixar o LigueTalk."
-    exit 1
-fi
+# 6. Executar instalador via Wine
+echo "Instalando o LigueTalk com Wine..."
+wine "$EXE_PATH"
 
-# Instalar o LigueTalk usando o Wine
-wine ~/Downloads/LigueTalk-3.20.7.exe
-
-# Verificar se o LigueTalk foi instalado corretamente
-LIGUETALK_PATH=$(find ~/.wine/ -name LigueTalk.exe 2> /dev/null)
-
+# 7. Localizar o executável instalado
+LIGUETALK_PATH=$(find "$WINE_DIR" -type f -iname 'liguetalk*.exe' 2>/dev/null | head -n1)
 if [ -z "$LIGUETALK_PATH" ]; then
-    echo "Erro: LigueTalk não foi encontrado após a instalação."
+    echo "Erro: não foi possível localizar o executável do LigueTalk."
     exit 1
 fi
 
-# Identificar o usuário que está rodando o script
-USER_HOME=$(eval echo ~$(logname))
+# 8. Ajustar permissões do prefixo Wine para o usuário
+sudo chown -R "$SUDO_USER:${SUDO_USER:-$(whoami)}" "$WINE_DIR"
+sudo chmod -R u+rwX "$WINE_DIR"
 
-# Verificar se a pasta do usuário foi identificada
-if [ -z "$USER_HOME" ]; then
-    echo "Erro: Não foi possível identificar a pasta home do usuário."
-    exit 1
-fi
+# 9. Criar script de atalho para abrir o LigueTalk
+cat > "$EXEC_SCRIPT" <<EOF
+#!/bin/bash
+wine "$LIGUETALK_PATH"
+EOF
+chmod +x "$EXEC_SCRIPT"
+echo "Script de lançamento criado em: $EXEC_SCRIPT"
 
-# Garantir permissões adequadas para os diretórios do Wine
-WINE_DIR=~/.wine
-sudo chmod -R a+rX "$WINE_DIR"
-sudo chown -R $(whoami):$(whoami) "$WINE_DIR"
-
-# Criar script para abrir o LigueTalk no diretório correto do usuário
-echo '#!/bin/bash' > "$USER_HOME/abrir_liguetalk.sh"
-echo "wine '$LIGUETALK_PATH'" >> "$USER_HOME/abrir_liguetalk.sh"
-
-# Tornar o script executável
-chmod +x "$USER_HOME/abrir_liguetalk.sh"
-
-# Criar arquivo .desktop na pasta home do usuário
-cat <<EOF > "$USER_HOME/LigueTalk.desktop"
+# 10. Criar atalho .desktop no diretório de aplicações
+mkdir -p "$DESKTOP_DIR"
+cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Version=1.0
+Type=Application
 Name=LigueTalk
 Comment=Executar o LigueTalk via Wine
-Exec=$USER_HOME/abrir_liguetalk.sh
+Exec=$EXEC_SCRIPT
 Icon=utilities-terminal
 Terminal=false
-Type=Application
-Categories=Application
+Categories=Utility;Application;
 EOF
+chmod +x "$DESKTOP_FILE"
+echo "Atalho criado em: $DESKTOP_FILE"
 
-# Tornar o arquivo .desktop executável
-chmod +x "$USER_HOME/LigueTalk.desktop"
-
-# Verificar se o script foi criado corretamente
-if [ -f "$USER_HOME/abrir_liguetalk.sh" ]; then
-    echo "Script abrir_liguetalk.sh criado em $USER_HOME."
-else
-    echo "Erro: Não foi possível criar o script abrir_liguetalk.sh."
-fi
-
-# Verificar se o atalho foi criado com sucesso
-if [ -f "$USER_HOME/LigueTalk.desktop" ]; then
-    echo "Atalho criado na pasta home do usuário $USER_HOME."
-else
-    echo "Erro: Não foi possível criar o atalho na pasta home do usuário."
-fi
-
-echo "Instalação concluída."
+echo "Instalação e configuração concluídas com sucesso."
