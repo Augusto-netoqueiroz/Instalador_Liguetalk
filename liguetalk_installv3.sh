@@ -16,8 +16,8 @@ if ! command -v wine &> /dev/null; then
 fi
 
 # Caminho para download e instalação
-INSTALLER_NAME="LigueTalk-Setup.exe"
-INSTALLER_URL="https://sistema.liguetalk.com.br/downloads/LigueTalk-Setup.exe"
+INSTALLER_NAME="LigueTalk-3.20.7.exe"
+INSTALLER_URL="https://www.microsip.org/download/private/$INSTALLER_NAME"
 INSTALLER_PATH="$USER_HOME/Downloads/$INSTALLER_NAME"
 
 # Baixar instalador se não existir
@@ -63,4 +63,4 @@ Icon=wine
 Categories=Network;Application;
 EOF
 
-echo "Instalação concluída com sucesso!"
+echo "✅ Instalação do LigueTalk concluída com sucesso!"
