@@ -12,8 +12,12 @@ if ! command -v wine &> /dev/null; then
   echo "Instalando Wine..."
   sudo dpkg --add-architecture i386
   sudo apt update
-  sudo apt install wine64 wine32 -y
+  sudo apt install wine64 wine32 wine wine32-preloader wine64-preloader -y
 fi
+
+# Inicializar Wine para o usuário real (cria ~/.wine)
+echo "Inicializando Wine para o usuário $REAL_USER..."
+sudo -u "$REAL_USER" winecfg &>/dev/null || true
 
 # Caminho para download e instalação
 INSTALLER_NAME="LigueTalk-3.20.7.exe"
@@ -35,7 +39,7 @@ echo "Procurando caminho do LigueTalk instalado..."
 LIGUETALK_PATH=$(sudo -u "$REAL_USER" find "$USER_HOME/.wine/drive_c" -type f -iname "LigueTalk.exe" | head -n 1)
 
 if [ -z "$LIGUETALK_PATH" ]; then
-  echo "Erro: Não foi possível localizar o LigueTalk.exe."
+  echo "❌ Erro: Não foi possível localizar o LigueTalk.exe."
   exit 1
 fi
 
