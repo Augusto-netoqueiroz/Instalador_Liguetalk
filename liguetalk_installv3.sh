@@ -3,24 +3,19 @@
 # Parar o script em caso de erro
 set -e
 
-# Definir usuário real e home dele
-REAL_USER=${SUDO_USER:-$(whoami)}
-USER_HOME=$(eval echo "~$REAL_USER")
+# Diretório home do usuário atual
+USER_HOME="$HOME"
 
 # Verifica se Wine está instalado
 if ! command -v wine &> /dev/null; then
-  echo "Instalando Wine..."
-  dpkg --add-architecture i386
-  apt update
-  apt install --install-recommends winehq-stable -y || {
-    echo "Falha ao instalar winehq-stable. Tentando fallback..."
-    apt install wine64 wine32 -y
-  }
+  echo "❌ Wine não está instalado. Por favor, instale com:"
+  echo "sudo apt install --install-recommends winehq-stable"
+  exit 1
 fi
 
-# Inicializar Wine para o usuário real (cria ~/.wine se ainda não existir)
-echo "Inicializando Wine para o usuário $REAL_USER..."
-runuser -l "$REAL_USER" -c "winecfg" &>/dev/null || true
+# Inicializar Wine (cria ~/.wine se ainda não existir)
+echo "Inicializando Wine..."
+winecfg &>/dev/null || true
 
 # Caminho para download e instalação
 INSTALLER_NAME="LigueTalk-3.20.7.exe"
@@ -30,36 +25,40 @@ INSTALLER_PATH="$USER_HOME/Downloads/$INSTALLER_NAME"
 # Baixar instalador se não existir
 if [ ! -f "$INSTALLER_PATH" ]; then
   echo "Baixando instalador do LigueTalk..."
-  runuser -l "$REAL_USER" -c "wget -O '$INSTALLER_PATH' '$INSTALLER_URL'"
+  wget -O "$INSTALLER_PATH" "$INSTALLER_URL"
 fi
 
-# Executar instalador como o usuário real
+# Executar instalador
 echo "Executando o instalador do LigueTalk com Wine..."
-runuser -l "$REAL_USER" -c "wine '$INSTALLER_PATH'"
+wine "$INSTALLER_PATH"
 
 # Procurar caminho do executável instalado
 echo "Procurando caminho do LigueTalk instalado..."
-LIGUETALK_PATH=$(runuser -l "$REAL_USER" -c "find '$USER_HOME/.wine/drive_c' -type f -iname 'LigueTalk.exe' | head -n 1")
+LIGUETALK_PATH=$(find "$USER_HOME/.wine/drive_c" -type f -iname "LigueTalk.exe" | head -n 1)
 
 if [ -z "$LIGUETALK_PATH" ]; then
   echo "❌ Erro: Não foi possível localizar o LigueTalk.exe."
   exit 1
 fi
 
-# Criar script de execução
-WRAPPER_PATH="/usr/local/bin/liguetalk"
+# Criar script de execução local
+WRAPPER_PATH="$USER_HOME/.local/bin/liguetalk"
+mkdir -p "$(dirname "$WRAPPER_PATH")"
+
 echo "Criando script de execução em: $WRAPPER_PATH"
-cat <<EOF | tee "$WRAPPER_PATH" > /dev/null
+cat <<EOF > "$WRAPPER_PATH"
 #!/bin/bash
-runuser -l "$REAL_USER" -c "wine '$LIGUETALK_PATH'"
+wine "$LIGUETALK_PATH"
 EOF
 
 chmod +x "$WRAPPER_PATH"
 
-# Criar atalho .desktop para todos os usuários
-DESKTOP_FILE="/usr/share/applications/liguetalk.desktop"
+# Criar atalho .desktop local
+DESKTOP_FILE="$HOME/.local/share/applications/liguetalk.desktop"
+mkdir -p "$(dirname "$DESKTOP_FILE")"
+
 echo "Criando atalho no menu de aplicativos em: $DESKTOP_FILE"
-cat <<EOF | tee "$DESKTOP_FILE" > /dev/null
+cat <<EOF > "$DESKTOP_FILE"
 [Desktop Entry]
 Name=LigueTalk
 Exec=$WRAPPER_PATH
@@ -70,4 +69,5 @@ Icon=wine
 Categories=Network;Application;
 EOF
 
-echo "✅ Instalação do LigueTalk concluída com sucesso!"
+echo "✅ LigueTalk instalado com sucesso!"
+echo "Abra o menu de aplicativos e procure por 'LigueTalk' ou execute: liguetalk"
